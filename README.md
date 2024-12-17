@@ -1,235 +1,141 @@
-# Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task
+## links
 
-Spider is a large human-labeled dataset for complex and cross-domain semantic parsing and text-to-SQL task (natural language interfaces for relational databases). It is released along with our EMNLP 2018 paper: [Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task](https://arxiv.org/abs/1809.08887). This repo contains all code for evaluation, preprocessing, and all baselines used in our paper. Please refer to [the task site](https://yale-lily.github.io/spider) for more general introduction and the leaderboard.
+Spider相关链接：
+* github链接： [taoyds/spider: scripts and baselines for Spider: Yale complex and cross-domain semantic parsing and text-to-SQL challenge](https://github.com/taoyds/spider)
+* 数据集网站： [Spider: Yale Semantic Parsing and Text-to-SQL Challenge](https://yale-lily.github.io//spider)
+* spider的简单概括：[Text-to-SQL学习整理（八）Spider数据集介绍导语 前面的一系列博客中，我们已经了解到Text2SQL任务的 - 掘金](https://juejin.cn/post/7085557671528660999)
+* spider的数据集大小说明：[Spider数据集论文研读 - 阿帆fann - 博客园](https://www.cnblogs.com/tyfann/p/15727093.html)
 
-:+1: `03/20/2022`: **We open-sourced a simple but SOTA model (just T5) for the task! Please check out our code in the [UnifiedSKG repo](https://github.com/hkunlp/unifiedskg)!!**
+相关论文：
+* Spider ：[[1809.08887] Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task](https://arxiv.org/abs/1809.08887)
+* [Can LLM already serve as a database interface? a big bench for large-scale database grounded text-to-SQLs | Proceedings of the 37th International Conference on Neural Information Processing Systems](https://dl.acm.org/doi/10.5555/3666122.3667957)
 
-### Changelog
--`11/15/2020` We will use [Test Suite Accuracy](https://arxiv.org/abs/2010.02840) as our official evaluation metric for Spider, SParC, and CoSQL. Please find the evaluation code from [here](https://github.com/taoyds/test-suite-sql-eval).
-- `08/03/2020` Corrected `column_name` and `column_name_original` mismatches in 2 dbs (`scholar` and `formula_1`) in `tables.json`, and reparsed SQL queries (this only affects some models (e.g. RATSQL) which use our parsed SQL as the SQL input). Please download the Spider dataset from [the page](https://yale-lily.github.io/spider) again.
-- `06/07/2020` We corrected some annotation errors and label mismatches (not errors) in Spider dev and test sets (~4% of dev examples updated, click [here](https://github.com/taoyds/spider/commit/25fcd85d9b6e94acaeb5e9172deadeefeed83f5e#diff-18b0a730a7b0d29b0a78a5070d971d49) for more details). Please download the Spider dataset from [the page](https://yale-lily.github.io/spider) again.
-- `01/16/2020` For value prediction (in order to compute the execution accuracy), your model should be able to 1) copy from the question inputs, 2) retrieve from the database content (database content is available), or 3) generate numbers (e.g. 3 in "LIMIT 3").
-- `1/14/2019` The submission toturial is ready! Please follow it to get your results on the unreleased test data.
-- `12/17/2018` We updated 7 sqlite database files. Please download the Spider data from the official website again. Please refer to [the issue 14](https://github.com/taoyds/spider/issues/14) for more details.
-- `10/25/2018`: evaluation script is updated so that the table in `count(*)`cases will be evaluated as well. Please check out [the issue 5](https://github.com/taoyds/spider/issues/5) for more info. Results of all baselines and [syntaxSQL](https://github.com/taoyds/syntaxSQL) on the papers are updated as well.
-- `10/25/2018`: to get the latest SQL parsing results (a few small bugs fixed), please use `preprocess/parse_raw_json.py` to update. Please refer to [the issue 3](https://github.com/taoyds/spider/issues/3) for more details.
+Spider2.0原文：Notably, methods based on GPT-4 achieved execution accuracy of 91.2% and 73.0% on the classic benchmarks Spider 1.0 (Yu et al., 2018) and BIRD (Li et al., 2024b), respectively.
 
-### Citation
+## 在Spider1.0数据集上简单测试 raw llm的text-to-sql能力
+### Spider1.0
+关于Spider1.0数据集的介绍，参考 [spider/README.md at master · taoyds/spider](https://github.com/taoyds/spider/blob/master/README.md)
+本项目下的文件夹 `spider_data` 下载于链接 [spider_data.zip - Google 云端硬盘](https://drive.google.com/file/d/1403EGqzIDoHMdQF4c9Bkyl7dZLZ5Wt6J/view)
 
-The dataset is annotated by 11 college students. When you use the Spider dataset, we would appreciate it if you cite the following:
-
-```
-@inproceedings{Yu&al.18c,
-  title     = {Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task},
-  author    = {Tao Yu and Rui Zhang and Kai Yang and Michihiro Yasunaga and Dongxu Wang and Zifan Li and James Ma and Irene Li and Qingning Yao and Shanelle Roman and Zilin Zhang and Dragomir Radev}
-  booktitle = "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
-  address   = "Brussels, Belgium",
-  publisher = "Association for Computational Linguistics",
-  year      = 2018
-}
-```
-
-### Installation
-
-`evaluation.py` and `process_sql.py` are written in Python 3. Enviroment setup for each baseline is in README under each baseline directory.
-
-
-### Data Content and Format
-
-#### Question, SQL, and Parsed SQL
-
-Each file in`train.json` and `dev.json` contains the following fields:
-- `question`: the natural language question
-- `question_toks`: the natural language question tokens
-- `db_id`: the database id to which this question is addressed.
-- `query`: the SQL query corresponding to the question. 
-- `query_toks`: the SQL query tokens corresponding to the question. 
-- `sql`: parsed results of this SQL query using `process_sql.py`. Please refer to `parsed_sql_examples.sql` in the`preprocess` directory for the detailed documentation.
-
-
-```
- {
-        "db_id": "world_1",
-        "query": "SELECT avg(LifeExpectancy) FROM country WHERE Name NOT IN (SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code  =  T2.CountryCode WHERE T2.Language  =  \"English\" AND T2.IsOfficial  =  \"T\")",
-        "query_toks": ["SELECT", "avg", "(", "LifeExpectancy", ")", "FROM", ...],
-        "question": "What is average life expectancy in the countries where English is not the official language?",
-        "question_toks": ["What", "is", "average", "life", ...],
-        "sql": {
-            "except": null,
-            "from": {
-                "conds": [],
-                "table_units": [
-                    ...
-            },
-            "groupBy": [],
-            "having": [],
-            "intersect": null,
-            "limit": null,
-            "orderBy": [],
-            "select": [
-                ...
-            ],
-            "union": null,
-            "where": [
-                [
-                    true,
-                    ...
-                    {
-                        "except": null,
-                        "from": {
-                            "conds": [
-                                [
-                                    false,
-                                    2,
-                                    [
-                                    ...
-                        },
-                        "groupBy": [],
-                        "having": [],
-                        "intersect": null,
-                        "limit": null,
-                        "orderBy": [],
-                        "select": [
-                            false,
-                            ...
-                        "union": null,
-                        "where": [
-                            [
-                                false,
-                                2,
-                                [
-                                    0,
-                                   ...
-        }
-    },
-
-```
-
-#### Tables
-
-`tables.json` contains the following information for each database:
-- `db_id`: database id
-- `table_names_original`: original table names stored in the database.
-- `table_names`: cleaned and normalized table names. We make sure the table names are meaningful. [to be changed]
-- `column_names_original`: original column names stored in the database. Each column looks like: `[0, "id"]`. `0` is the index of table names in `table_names`, which is `city` in this case. `"id"` is the column name. 
-- `column_names`: cleaned and normalized column names. We make sure the column names are meaningful. [to be changed]
-- `column_types`: data type of each column
-- `foreign_keys`: foreign keys in the database. `[3, 8]` means column indices in the `column_names`. These two columns are foreign keys of two different tables.
-- `primary_keys`: primary keys in the database. Each number is the index of `column_names`.
-
-
-```
-{
-    "column_names": [
-      [
-        0,
-        "id"
-      ],
-      [
-        0,
-        "name"
-      ],
-      [
-        0,
-        "country code"
-      ],
-      [
-        0,
-        "district"
-      ],
-      .
-      .
-      .
-    ],
-    "column_names_original": [
-      [
-        0,
-        "ID"
-      ],
-      [
-        0,
-        "Name"
-      ],
-      [
-        0,
-        "CountryCode"
-      ],
-      [
-        0,
-        "District"
-      ],
-      .
-      .
-      .
-    ],
-    "column_types": [
-      "number",
-      "text",
-      "text",
-      "text",
-         .
-         .
-         .
-    ],
-    "db_id": "world_1",
-    "foreign_keys": [
-      [
-        3,
-        8
-      ],
-      [
-        23,
-        8
-      ]
-    ],
-    "primary_keys": [
-      1,
-      8,
-      23
-    ],
-    "table_names": [
-      "city",
-      "sqlite sequence",
-      "country",
-      "country language"
-    ],
-    "table_names_original": [
-      "city",
-      "sqlite_sequence",
-      "country",
-      "countrylanguage"
-    ]
-  }
-```
-
-
-#### Databases
-
-All table contents are contained in corresponding SQLite3 database files.
-
-
-### Evaluation
-
-Update 11/15/20: We will use [Test Suite Accuracy](https://arxiv.org/abs/2010.02840) as our official evaluation metric for Spider, SParC, and CoSQL. Please find the evaluation code from [here](https://github.com/taoyds/test-suite-sql-eval).
-Our evaluation metrics include Component Matching, Exact Matching, and Execution Accuracy. For component and exact matching evaluation, instead of simply conducting string comparison between the predicted and gold SQL queries, we decompose each SQL into several clauses, and conduct set comparison in each SQL clause. 
-
-For Execution Accuracy, our current models do not predict any value in SQL conditions so that we do not provide execution accuracies. However, we encourage you to provide it in the future submissions. For value prediction, you can assume that a list of gold values for each question is given. Your model has to fill them into the right slots in the SQL.
-
-Please refer to [our paper]() and [this page](https://github.com/taoyds/spider/tree/master/evaluation) for more details and examples.
-
-```
-python evaluation.py --gold [gold file] --pred [predicted file] --etype [evaluation type] --db [database dir] --table [table file]
-
-arguments:
-  [gold file]        gold.sql file where each line is `a gold SQL \t db_id`
-  [predicted file]   predicted sql file where each line is a predicted SQL
-  [evaluation type]  "match" for exact set matching score, "exec" for execution score, and "all" for both
-  [database dir]     directory which contains sub-directories where each SQLite3 database is stored
-  [table file]       table.json file which includes foreign key info of each database
+### preparation
+Spider1.0的数据集spider_data包含的数据库文件比较大，不便上传到github，所以请先在下面链接下载spider_data.zip文件并解压到本项目目录下： [spider_data.zip - Google 云端硬盘](https://drive.google.com/file/d/1403EGqzIDoHMdQF4c9Bkyl7dZLZ5Wt6J/view)
+### setup
+1. 测试数据取自`spider_data`中的测试文件test.json ,  对应的database schema文件test_tables.json以及test_gold.sql
+2. input : Spider1.0数据集的测试文件test.json ,  以及对应的database schema文件test_tables.json
+3. output : 生成的sql文件 "test_predict_1.0.txt" ，llm的生成结果和代价的记录文件test_predict_1.0.jsonl
+4. llm setup 
+* model = "gpt-4o-mini"， “gpt-4-turbo” , 智谱的"glm-4-plus"
+* temperature = 0.0
+* 测试数目：150条
+### prompt(llm代码见文件夹Spider1_LLM_Baseline)
+只包括简单的task description， question，database schema（直接采用spider数据集提供的json格式schema） and description
+``` python
+llm_string = """  
+Let's think step by step.You are an expert in sqls.\  
+Please generate the corresponding SQLite sql for the following question based on the provided database schema information and schema description, and provide a brief explanation.\  
+question : {question}\  
+database schema : {schema}\  
+database schema description : {description}  
+Answer the following information: {format_instructions}  """  
   
+prompt_template = ChatPromptTemplate.from_template(llm_string)  
+  
+response_schemas = [  
+    ResponseSchema(type="string", name="sql", description='The sql answer to the question.'),  
+    ResponseSchema(type="string", name="explanation", description='Explain the basis for the sql answer.')  
+]
 ```
 
-### FAQ
+### run llm agent
+下面分别是基于gpt-4o-mini, gpt-4,  glm-4-plus（智谱）为Spider测试sql执行text-to-sql的指令
+``` shell
+cd <project_directory>
+```
+
+``` shell
+python -m Spider1_LLM_Baseline.chatgpt_text_to_sql --test_num 150 --model "gpt-4o-mini" --temperature 0.0 --"llm_key" ${your_api_key}
+```
 
 
+``` shell
+python -m Spider1_LLM_Baseline.chatgpt_text_to_sql --test_num 150 --model "gpt-4-turbo" --temperature 0.0 --"llm_key" ${your_api_key}
+```
 
+
+``` shell
+python -m Spider1_LLM_Baseline.zhipu_text_to_sql --test_num 150 --model "glm-4-plus" --temperature 0.0 --"llm_key" ${your_api_key}
+```
+
+上述指令参数说明：
+
+| option          | description                  |
+| --------------- | ---------------------------- |
+| `--test_num`    | 从spider_data的测试数据集中选取的测试数据条数 |
+| `--temperature` | Temperature for LLM          |
+| `--model`       | Model to use for LLM         |
+| `--llm_key`     | llm key                      |
+
+
+运行结果将输出到文件夹`Output`的`model_name`子文件夹中，如下：
+gold.txt : 指定测试个数的sqls正确答案
+predixt.txt : 指定测试个数的sqls预测答案
+predixt.jsonl ：指定测试个数的text-to-sql任务中间结果
+
+### evaluate
+上面三个测试模型的evaluate指令分别如下：
+``` shell
+cd <project_directory>
+```
+
+``` shell
+python evaluation.py --gold "Output/gpt-4o-mini/gold.txt" --pred "Output/gpt-4o-mini/predict.txt" --acc "Output/gpt-4o-mini/eval_result.txt" --db "spider_data/test_database" --etype "all" --table "spider_data/test_tables.json"
+```
+
+``` shell
+python evaluation.py --gold "Output/gpt-4-turbo/gold.txt" --pred "Output/gpt-4-turbo/predict.txt" --acc "Output/gpt-4/eval_result.txt" --db "spider_data/test_database" --etype "all" --table "spider_data/test_tables.json"
+```
+
+``` shell
+python evaluation.py --gold "Output/gpt-4o-mini/gold.txt" --pred "Output/glm-4-plus/predict.txt" --acc "Output/glm-4-plus/eval_result.txt" --db "spider_data/test_database" --etype "all" --table "spider_data/test_tables.json"
+```
+
+上述指令的输出结果存储于文件夹`Output`的`model_name`子文件夹中，如下：
+eval_result.txt : 指定测试个数的sqls的text-to-sql任务评估结果
+
+### results
+"gpt-4o-mini"
+```
+                     easy                 medium               hard                 extra                all                   
+count                36                   53                   35                   26                   150                   
+=====================   EXECUTION ACCURACY     =====================  
+execution            0.444                0.151                0.086                0.000                0.180                 
+  
+====================== EXACT MATCHING ACCURACY =====================  
+exact match          0.444                0.151                0.086                0.000                0.180
+```
+
+"gpt-4-turbo"
+```
+                     easy                 medium               hard                 extra                all                   
+count                28                   34                   29                   19                   110                   
+=====================   EXECUTION ACCURACY     =====================  
+execution            0.607                0.206                0.207                0.105                0.291                 
+  
+====================== EXACT MATCHING ACCURACY =====================  
+exact match          0.607                0.235                0.207                0.105                0.300
+```
+
+智谱的"glm-4-plus"
+```
+                     easy                 medium               hard                 extra                all                   
+count                36                   53                   35                   26                   150                   
+=====================   EXECUTION ACCURACY     =====================  
+execution            0.528                0.226                0.000                0.269                0.253                 
+  
+====================== EXACT MATCHING ACCURACY =====================  
+exact match          0.444                0.245                0.000                0.231                0.233
+```
+
+
+* 直接使用上面这种prompt，database schema信息较长，很容易超过问题的上下文限制（8000+，4000+）
+* 各难度测试样例的平均execution success 比例，最佳情况下也只有30%左右
