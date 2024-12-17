@@ -1,0 +1,150 @@
+SELECT COUNT(*) FROM club
+SELECT COUNT(*) FROM club
+SELECT name FROM club ORDER BY name ASC;
+SELECT name FROM club ORDER BY name ASC;
+SELECT club.name AS ClubName, club.manager AS Manager, club.captain AS Captain FROM club;
+SELECT club.name AS ClubName, club.manager AS Manager, club.captain AS Captain FROM club;
+SELECT name FROM club WHERE manufacturer != 'Nike';
+SELECT name FROM club WHERE manufacturer != 'Nike';
+SELECT p.name FROM player p ORDER BY p.wins_count ASC
+SELECT p.name FROM player p ORDER BY p.wins_count ASC
+SELECT p.name FROM player p ORDER BY p.earnings DESC LIMIT 1
+SELECT p.name FROM player p ORDER BY p.earnings DESC LIMIT 1
+SELECT DISTINCT country FROM player WHERE earnings > 1200000
+SELECT DISTINCT p.country FROM player p WHERE p.earnings > 1200000
+SELECT p.country FROM player p WHERE p.wins_count > 2 ORDER BY p.earnings DESC LIMIT 1
+SELECT p.country FROM player p WHERE p.wins_count > 2 GROUP BY p.country ORDER BY COUNT(p.player_id) DESC LIMIT 1;
+SELECT player.name AS player_name, club.name AS club_name FROM player JOIN club ON player.club_id = club.club_id
+SELECT player.name AS player_name, club.name AS club_name FROM player JOIN club ON player.club_id = club.club_id
+SELECT DISTINCT c.name FROM club c JOIN player p ON c.club_id = p.club_id WHERE p.wins_count > 2
+SELECT DISTINCT c.name FROM club c JOIN player p ON c.club_id = p.club_id WHERE p.wins_count > 2;
+SELECT p.name FROM player p JOIN club c ON p.club_id = c.club_id WHERE c.manager = 'Sam Allardyce';
+SELECT p.name FROM player p JOIN club c ON p.club_id = c.club_id WHERE c.manager = 'Sam Allardyce';
+SELECT c.name FROM club c JOIN player p ON c.club_id = p.club_id GROUP BY c.name ORDER BY AVG(p.earnings) DESC
+SELECT c.name AS club_name, AVG(p.earnings) AS avg_earnings FROM club c JOIN player p ON c.club_id = p.club_id GROUP BY c.name ORDER BY avg_earnings DESC
+SELECT manufacturer, COUNT(DISTINCT club_id) AS club_count FROM club GROUP BY manufacturer;
+SELECT manufacturer, COUNT(*) AS club_count FROM club GROUP BY manufacturer
+SELECT `manufacturer`, COUNT(*) AS `count` FROM `club` GROUP BY `manufacturer` ORDER BY `count` DESC LIMIT 1;
+SELECT manufacturer, COUNT(*) AS count FROM club GROUP BY manufacturer ORDER BY count DESC LIMIT 1;
+SELECT manufacturer FROM club GROUP BY manufacturer HAVING COUNT(*) > 1
+SELECT Manufacturer, COUNT(DISTINCT Club_ID) AS ClubCount FROM club GROUP BY Manufacturer HAVING ClubCount > 1
+SELECT country FROM player GROUP BY country HAVING COUNT(player_id) > 1
+SELECT country FROM player GROUP BY country HAVING COUNT(player_id) > 1
+SELECT c.name FROM club c LEFT JOIN player p ON c.club_id = p.club_id WHERE p.player_id IS NULL
+SELECT c.name FROM club c LEFT JOIN player p ON c.club_id = p.club_id WHERE p.player_id IS NULL
+SELECT DISTINCT country FROM player WHERE earnings > 1400000 OR earnings < 1100000;
+SELECT DISTINCT p1.country FROM player p1 JOIN player p2 ON p1.country = p2.country WHERE p1.earnings > 1400000 AND p2.earnings < 1100000
+SELECT COUNT(DISTINCT country) FROM player
+SELECT COUNT(DISTINCT country) FROM player
+SELECT p.name, p.earnings FROM player p WHERE p.country IN ('Australia', 'Zimbabwe')
+SELECT SUM(earnings) AS total_earnings FROM player WHERE country IN ('Australia', 'Zimbabwe')
+SELECT c.customer_id, c.customer_first_name, c.customer_last_name FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id GROUP BY c.customer_id HAVING COUNT(DISTINCT o.order_id) > 2 AND COUNT(oi.order_item_id) >= 3
+SELECT c.customer_id, c.customer_first_name, c.customer_last_name FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id GROUP BY c.customer_id HAVING COUNT(DISTINCT o.order_id) > 2 AND COUNT(oi.order_item_id) >= 3
+SELECT o.order_id, o.order_status_code, COUNT(oi.product_id) AS product_count FROM orders o JOIN order_items oi ON o.order_id = oi.order_id GROUP BY o.order_id, o.order_status_code;
+SELECT o.order_id, COUNT(oi.product_id) AS product_count, o.order_status_code FROM orders o JOIN order_items oi ON o.order_id = oi.order_id GROUP BY o.order_id, o.order_status_code;
+SELECT DISTINCT o.date_order_placed FROM orders o JOIN order_items oi ON o.order_id = oi.order_id WHERE o.date_order_placed = (SELECT MIN(date_order_placed) FROM orders) OR (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) > 1;
+SELECT MIN(o.date_order_placed) AS earliest_order_date, o.date_order_placed FROM orders o JOIN order_items oi ON o.order_id = oi.order_id GROUP BY o.order_id HAVING COUNT(oi.order_item_id) > 1;
+SELECT c.customer_first_name, c.customer_middle_initial, c.customer_last_name FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_id IS NULL;
+SELECT c.customer_first_name, c.customer_middle_initial, c.customer_last_name FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_id IS NULL;
+SELECT p.product_id, p.product_name, p.product_price, p.product_color FROM products p WHERE (SELECT COUNT(*) FROM order_items oi WHERE oi.product_id = p.product_id) < 2;
+SELECT p.product_id, p.product_name, p.product_price, p.product_color FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id HAVING COUNT(oi.order_id) < 2
+SELECT o.order_id, o.date_order_placed FROM orders o JOIN order_items oi ON o.order_id = oi.order_id GROUP BY o.order_id HAVING COUNT(oi.product_id) >= 2
+SELECT o.order_id, o.date_order_placed FROM orders o JOIN order_items oi ON o.order_id = oi.order_id GROUP BY o.order_id HAVING COUNT(oi.product_id) >= 2
+SELECT p.product_id, p.product_name, p.product_price FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id ORDER BY COUNT(oi.order_item_id) DESC LIMIT 1;
+SELECT p.product_id, p.product_name, p.product_price FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id ORDER BY COUNT(oi.order_item_id) DESC LIMIT 1;
+SELECT o.order_id, SUM(p.product_price) AS total_price FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id GROUP BY o.order_id ORDER BY total_price ASC LIMIT 1
+SELECT o.order_id, SUM(p.product_price) AS total_cost FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id GROUP BY o.order_id ORDER BY total_cost ASC LIMIT 1;
+SELECT `payment method code`, COUNT(*) AS count FROM `customer payment methods` GROUP BY `payment method code` ORDER BY count DESC LIMIT 1;
+SELECT `payment method code`, COUNT(*) AS usage_count FROM `customer payment methods` GROUP BY `payment method code` ORDER BY usage_count DESC LIMIT 1;
+SELECT c.gender_code, COUNT(DISTINCT o.product_id) AS number_of_products           FROM customers c           JOIN orders o ON c.customer_id = o.customer_id           JOIN order_items oi ON o.order_id = oi.order_id           GROUP BY c.gender_code;
+SELECT c.gender_code, COUNT(DISTINCT p.product_id) AS product_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id GROUP BY c.gender_code
+SELECT c.gender_code, COUNT(o.order_id) AS order_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.gender_code
+SELECT c.gender_code, COUNT(o.order_id) AS order_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.gender_code
+SELECT c.customer_first_name, c.customer_middle_initial, c.customer_last_name, pm.payment_method_code FROM customers c JOIN customer_payment_methods pm ON c.customer_id = pm.customer_id;
+SELECT c.customer_first_name, c.customer_middle_initial, c.customer_last_name, p.payment_method_code FROM customers c JOIN customer_payment_methods p ON c.customer_id = p.customer_id
+SELECT invoices.invoice_status_code, invoices.invoice_date, shipments.shipment_date FROM invoices JOIN shipments ON invoices.invoice_number = shipments.invoice_number;
+SELECT i.invoice_status_code, i.invoice_date, s.shipment_date FROM invoices i LEFT JOIN shipments s ON i.invoice_number = s.invoice_number;
+SELECT p.product_name, s.shipment_date FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN shipments s ON oi.order_id = s.order_id
+SELECT p.product_name, s.shipment_date FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN shipments s ON oi.order_id = s.order_id WHERE s.shipment_date IS NOT NULL;
+SELECT o.order_status_code, s.shipment_tracking_number FROM orders o JOIN shipments s ON o.order_id = s.order_id WHERE o.order_status_code = 'shipped';
+SELECT o.order_status_code, s.shipment_tracking_number FROM orders o JOIN shipments s ON o.order_id = s.order_id WHERE o.order_status_code = 'shipped';
+SELECT p.product_name, p.product_color FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN shipments s ON oi.order_id = s.order_id WHERE s.shipment_date IS NOT NULL
+SELECT p.product_name, p.product_color FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN shipments s ON oi.order_id = s.order_id WHERE s.shipment_date IS NOT NULL;
+SELECT DISTINCT p.product_name, p.product_price, p.product_description FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN orders o ON oi.order_id = o.order_id JOIN customers c ON o.customer_id = c.customer_id WHERE c.gender_code = 'F'
+SELECT DISTINCT p.product_name, p.product_price, p.product_description FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN orders o ON oi.order_id = o.order_id JOIN customers c ON o.customer_id = c.customer_id WHERE c.gender_code = 'F'
+SELECT i.invoice_status_code FROM invoices i JOIN orders o ON i.invoice_number = o.invoice_number WHERE o.order_status_code != 'Shipped';
+SELECT DISTINCT i.invoice_status_code FROM invoices i JOIN orders o ON i.invoice_number = o.invoice_number WHERE o.order_status_code != 'Shipped'
+SELECT o.order_id, o.date_order_placed, SUM(p.product_price * oi.quantity) AS total_cost FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id GROUP BY o.order_id, o.date_order_placed
+SELECT o.order_id, o.date_order_placed, SUM(p.product_price * oi.quantity) AS total_amount_paid FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id GROUP BY o.order_id
+SELECT COUNT(DISTINCT o.customer_id) FROM orders o
+SELECT COUNT(DISTINCT o.customer_id) FROM orders o
+SELECT COUNT(DISTINCT order_item_status_code) FROM order_items
+SELECT COUNT(DISTINCT "order item status code") FROM "order items"
+SELECT COUNT(DISTINCT payment_method_code) FROM customer_payment_methods
+SELECT COUNT(DISTINCT payment_method_code) FROM customer_payment_methods
+SELECT login_name, login_password FROM customers WHERE phone_number LIKE '+12%'
+SELECT login_name, login_password FROM customers WHERE phone_number LIKE '+12%'
+SELECT DISTINCT `product size` FROM `products` WHERE `product name` LIKE '%Dell%';
+SELECT DISTINCT `product size` FROM `products` WHERE `product name` LIKE '%Dell%';
+SELECT product_price, product_size FROM products WHERE product_price > (SELECT AVG(product_price) FROM products)
+SELECT product_price, product_size FROM products WHERE product_price > (SELECT AVG(product_price) FROM products)
+SELECT COUNT(*) FROM products WHERE product_id NOT IN (SELECT product_id FROM order_items)
+SELECT COUNT(*) FROM products WHERE product_id NOT IN (SELECT product_id FROM order_items)
+SELECT COUNT(*) FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM customer payment methods)
+SELECT COUNT(*) FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM customer_payment_methods)
+SELECT DISTINCT order_status_code, date_order_placed FROM orders;
+SELECT order_status_code, date_order_placed FROM orders;
+SELECT address_line_1, town_city, county FROM customers WHERE country = 'USA';
+SELECT address_line_1, town_city, county FROM customers WHERE country = 'United States';
+SELECT c.customer_first_name, p.product_name FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id;
+SELECT c.customer_first_name, p.product_name FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id;
+SELECT COUNT(*) FROM `shipment items`
+SELECT COUNT(DISTINCT p.product_id) FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN shipments s ON oi.order_id = s.order_id WHERE s.shipment_date IS NOT NULL
+SELECT AVG(product_price) AS average_price FROM products
+SELECT AVG(product_price) AS average_product_price FROM products
+SELECT AVG(p.product_price) AS average_price FROM products p JOIN order_items oi ON p.product_id = oi.product_id
+SELECT AVG(p.product_price) AS average_price FROM products p JOIN order_items oi ON p.product_id = oi.product_id
+SELECT c.email_address, c.town_city, c.county FROM customers c WHERE c.gender_code = (SELECT gender_code FROM customers GROUP BY gender_code ORDER BY COUNT(*) ASC LIMIT 1)
+SELECT c.email_address, c.town_city, c.county FROM customers c WHERE c.gender_code = (SELECT gender_code FROM orders o JOIN customers c ON o.customer_id = c.customer_id GROUP BY c.gender_code ORDER BY COUNT(o.order_id) ASC LIMIT 1)
+SELECT o.date_order_placed FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN customer_payment_methods cpm ON c.customer_id = cpm.customer_id GROUP BY o.customer_id HAVING COUNT(DISTINCT cpm.payment_method_code) >= 2
+SELECT o.date_order_placed FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN customer_payment_methods cpm ON c.customer_id = cpm.customer_id GROUP BY o.customer_id HAVING COUNT(DISTINCT cpm.payment_method_code) >= 2
+SELECT order_status_code, COUNT(*) as count FROM orders GROUP BY order_status_code ORDER BY count ASC LIMIT 1;
+SELECT order_status_code, COUNT(*) as count FROM orders GROUP BY order_status_code ORDER BY count ASC LIMIT 1;
+SELECT p.product_id, p.product_description FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id HAVING COUNT(oi.order_item_id) > 3
+SELECT p.product_id, p.product_description FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_id HAVING COUNT(oi.order_item_id) > 3
+SELECT i.invoice_date, i.invoice_number FROM invoices i JOIN shipments s ON i.invoice_number = s.invoice_number GROUP BY i.invoice_number HAVING COUNT(s.shipment_id) >= 2;
+SELECT i.invoice_date, i.invoice_number FROM invoices i JOIN shipments s ON i.invoice_number = s.invoice_number GROUP BY i.invoice_number HAVING COUNT(s.shipment_id) >= 2
+SELECT `shipment tracking number`, `shipment date` FROM `shipments`;
+SELECT `shipment tracking number`, `shipment date` FROM `shipments`;
+SELECT product_color, product_description, product_size FROM products WHERE product_price < (SELECT MAX(product_price) FROM products);
+SELECT product_color, product_description, product_size FROM products WHERE product_price < (SELECT MAX(product_price) FROM products);
+SELECT d.name FROM director d WHERE d.age > (SELECT AVG(age) FROM director)
+SELECT d.name FROM director d ORDER BY d.age DESC LIMIT 1;
+SELECT COUNT(*) FROM channel WHERE internet LIKE '%bbc%';
+SELECT COUNT(DISTINCT `digital terrestrial channel`) FROM `channel`;
+SELECT title FROM program ORDER BY start_year DESC;
+SELECT d.name, COUNT(p.program_id) AS program_count FROM director d JOIN program p ON d.director_id = p.director_id GROUP BY d.director_id ORDER BY program_count DESC LIMIT 1
+SELECT d.name, d.age FROM director d JOIN program p ON d.director_id = p.director_id GROUP BY d.director_id ORDER BY COUNT(p.program_id) DESC LIMIT 1
+SELECT title FROM program ORDER BY start_year DESC LIMIT 1
+SELECT c.name, c.internet FROM channel c JOIN program p ON c.channel_id = p.channel_id GROUP BY c.channel_id HAVING COUNT(p.program_id) > 1
+SELECT c.name, COUNT(p.program_id) AS num_programs FROM channel c JOIN program p ON c.channel_id = p.channel_id GROUP BY c.channel_id
+SELECT COUNT(*) FROM channel WHERE channel.id NOT IN (SELECT DISTINCT channel_id FROM program)
+SELECT d.name FROM director d JOIN program p ON d.director_id = p.director_id WHERE p.title = 'Dracula'
+SELECT c.name, c.internet FROM channel c JOIN director_admin da ON c.channel_id = da.channel_id GROUP BY c.channel_id ORDER BY COUNT(da.director_id) DESC LIMIT 1
+SELECT name FROM director WHERE age BETWEEN 30 AND 60;
+SELECT DISTINCT c.name FROM channel c JOIN director d1 ON c.channel_id = d1.channel_id WHERE d1.age < 40 INTERSECT SELECT DISTINCT c.name FROM channel c JOIN director d2 ON c.channel_id = d2.channel_id WHERE d2.age > 60
+SELECT c.channel_id, c.name FROM channel c LEFT JOIN director d ON c.channel_id = d.channel_id WHERE d.name IS NOT 'Hank Baskett' OR d.name IS NULL
+SELECT COUNT(*) FROM `radio`;
+SELECT transmitter FROM radio ORDER BY erp_kw ASC;
+SELECT tv_show_name, Original_Airdate FROM tv_show;
+SELECT `station name` FROM `city channel` WHERE `affiliation` != 'ABC'
+SELECT transmitter FROM radio WHERE erp_kw > 150 OR erp_kw < 30;
+SELECT transmitter FROM radio ORDER BY ERP_kW DESC LIMIT 1;
+SELECT AVG(erp_kw) AS average_erp FROM radio
+SELECT affiliation, COUNT(*) AS num_city_channels FROM `city channel` GROUP BY affiliation;
+SELECT affiliation, COUNT(*) AS count FROM `city channel` GROUP BY affiliation ORDER BY count DESC LIMIT 1;
+SELECT affiliation FROM city_channel GROUP BY affiliation HAVING COUNT(DISTINCT city) > 3;
+SELECT city, station_name FROM city_channel ORDER BY station_name ASC
+SELECT r.transmitter, c.city FROM radio r JOIN city_channel_radio cr ON r.radio_id = cr.radio_id JOIN city_channel c ON cr.city_channel_id = c.city_channel_id;
+SELECT r.transmitter, c.station_name FROM radio r JOIN city_channel c ON r.radio_id = c.radio_id ORDER BY r.erp_kw DESC
+SELECT r.transmitter, COUNT(ccr.city_channel_id) AS num_city_channels FROM radio r JOIN city_channel_radio ccr ON r.radio_id = ccr.radio_id GROUP BY r.transmitter

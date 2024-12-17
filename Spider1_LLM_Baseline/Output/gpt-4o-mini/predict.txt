@@ -1,0 +1,5 @@
+SELECT COUNT(DISTINCT `club id`) AS total_clubs FROM club;
+SELECT COUNT(*) AS total_clubs FROM club;
+SELECT name FROM club ORDER BY name ASC;
+SELECT name FROM club ORDER BY name ASC;
+SELECT manager, captain FROM club;
