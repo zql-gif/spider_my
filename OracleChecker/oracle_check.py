@@ -183,5 +183,4 @@ def execSQL_result_convertor(exec_result):
         for j in range(len(exec_result[0])):
             temp.append(str(item[j]))
         converted_result["rows"].append(temp)
-    print(converted_result)
     return converted_result

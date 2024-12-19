@@ -547,10 +547,13 @@ def print_scores(scores, etype, result_file):
 def evaluate(model, gold, predict, acc, db_dir, etype, kmaps):
     output_dic = os.path.join(current_dir, "Output", model.lower())
     detailed_gold_info_file = os.path.join(output_dic, "detailed_gold_info.jsonl")
+    detailed_llm_info_file = os.path.join(output_dic, "predict.jsonl")
     merged_info_file = os.path.join(output_dic, "merged_info.jsonl")
 
     with open(detailed_gold_info_file, "r", encoding="utf-8") as r:
         lines = r.readlines()
+    with open(detailed_llm_info_file, "r", encoding="utf-8") as r:
+        lines_llm = r.readlines()
 
     if os.path.exists(acc):
         print(acc+"has been exist.")
@@ -688,11 +691,13 @@ def evaluate(model, gold, predict, acc, db_dir, etype, kmaps):
 
         # 评估完一条，将其所有结果进行汇总："db_id"， "question"，"query"，"predict","gold_exec_result","predict_exec_result"
         info = json.loads(lines[CNT])
+        info_llm = json.loads(lines_llm[CNT])
         merged_eval_result = {
             "db_id":info["db_id"],
             "question":info["question"],
             "query":info["query"],
             "predict":p_str,
+            "llm_explanation":info_llm["explanation"],
             "gold_exec_result":gold_result_str,
             "predict_exec_result":predict_result_str,
             "exec_match":exec_score
