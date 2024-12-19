@@ -26,10 +26,13 @@ import sqlite3
 import traceback
 import argparse
 import nltk
+from OracleChecker.oracle_check import execSQL_result_convertor, Result, Check
 nltk.download('punkt_tab')
 
 from process_sql import tokenize, get_schema, get_tables_with_alias, Schema, get_sql
-
+current_file_path = os.path.abspath(__file__)
+# 获取当前文件所在目录
+current_dir = os.path.dirname(current_file_path)
 
 # Flag to disable value evaluation
 DISABLE_VALUE = True
@@ -484,6 +487,9 @@ def print_scores(scores, etype, result_file):
                      'group', 'order', 'and/or', 'IUEN', 'keywords']
 
     # 打开文件进行写入
+    if not os.path.exists(result_file):
+        with open(result_file, 'w') as file:
+            pass
     with open(result_file, 'a') as file:
         # 打印表头并写入文件
         header = "{:20} {:20} {:20} {:20} {:20} {:20}".format("", *levels)
@@ -538,10 +544,17 @@ def print_scores(scores, etype, result_file):
                 file.write(partial_f1 + '\n')
 
 
-def evaluate(gold, predict, acc, db_dir, etype, kmaps):
+def evaluate(model, gold, predict, acc, db_dir, etype, kmaps):
+    output_dic = os.path.join(current_dir, "Output", model.lower())
+    detailed_gold_info_file = os.path.join(output_dic, "detailed_gold_info.jsonl")
+    merged_info_file = os.path.join(output_dic, "merged_info.jsonl")
+
+    with open(detailed_gold_info_file, "r", encoding="utf-8") as r:
+        lines = r.readlines()
+
     if os.path.exists(acc):
         print(acc+"has been exist.")
-        return 
+        return
     with open(gold) as f:
         glist = [l.strip().split('\t') for l in f.readlines() if len(l.strip()) > 0]
 
@@ -565,6 +578,7 @@ def evaluate(gold, predict, acc, db_dir, etype, kmaps):
             scores[level]['partial'][type_] = {'acc': 0., 'rec': 0., 'f1': 0.,'acc_count':0,'rec_count':0}
 
     eval_err_num = 0
+    CNT = 0
     # 评估所有测试结果
     for p, g in zip(plist, glist):
         p_str = p[0] # predict sql string
@@ -576,7 +590,6 @@ def evaluate(gold, predict, acc, db_dir, etype, kmaps):
         hardness = evaluator.eval_hardness(g_sql)  # 评估其困难等级
         scores[hardness]['count'] += 1
         scores['all']['count'] += 1
-
         try:
             p_sql = get_sql(schema, p_str)
         except:
@@ -601,7 +614,6 @@ def evaluate(gold, predict, acc, db_dir, etype, kmaps):
             }
             eval_err_num += 1
             print("eval_err_num:{}".format(eval_err_num))
-
         # rebuild sql for value evaluation
         kmap = kmaps[db_name]
         g_valid_col_units = build_valid_col_units(g_sql['from']['table_units'], schema)
@@ -612,11 +624,32 @@ def evaluate(gold, predict, acc, db_dir, etype, kmaps):
         p_sql = rebuild_sql_col(p_valid_col_units, p_sql, kmap)
 
         # 评估exec acc
+        gold_result_str = ""
+        predict_result_str = ""
+        exec_score = False
         if etype in ["all", "exec"]:
-            exec_score = eval_exec_match(db, p_str, g_str, p_sql, g_sql)
+            # exec_score, gold_result, predict_result = eval_exec_match(db, p_str, g_str, p_sql, g_sql)
+            exec_score,gold_result_str,predict_result_str = eval_exec_match(db, p_str, g_str, p_sql, g_sql)
             if exec_score:
                 scores[hardness]['exec'] += 1.0
                 scores['all']['exec'] += 1.0
+            """
+            print(str(CNT))
+            print(exec_score)
+            print(gold_result_str)
+            print(predict_result_str)
+            """
+
+            """
+            # 将执行结果存储
+            exec_results_file = acc.replace(".txt", ".jsonl")
+            if not os.path.exists(exec_results_file):
+                with open(exec_results_file, 'w') as file:
+                    pass
+            with open(exec_results_file, 'a') as file:
+                json.dump({"gold_exec_result":str(gold_result), "predict_exec_result":str(predict_result)}, file)
+                file.write('\n')
+            """
 
         # 评估match acc
         if etype in ["all", "match"]:
@@ -652,6 +685,28 @@ def evaluate(gold, predict, acc, db_dir, etype, kmaps):
                 'partial': partial_scores
             })
 
+
+        # 评估完一条，将其所有结果进行汇总："db_id"， "question"，"query"，"predict","gold_exec_result","predict_exec_result"
+        info = json.loads(lines[CNT])
+        merged_eval_result = {
+            "db_id":info["db_id"],
+            "question":info["question"],
+            "query":info["query"],
+            "predict":p_str,
+            "gold_exec_result":gold_result_str,
+            "predict_exec_result":predict_result_str,
+            "exec_match":exec_score
+        }
+
+        # 将合并的结果存储
+        if not os.path.exists(merged_info_file):
+            with open(merged_info_file, 'w') as file:
+                pass
+        with open(merged_info_file, 'a') as file:
+            json.dump(merged_eval_result, file)
+            file.write('\n')
+        CNT += 1
+
     for level in levels:
         if scores[level]['count'] == 0:
             continue
@@ -679,7 +734,6 @@ def evaluate(gold, predict, acc, db_dir, etype, kmaps):
                         scores[level]['partial'][type_]['rec'] + scores[level]['partial'][type_]['acc'])
     print_scores(scores, etype, acc)
 
-
 def eval_exec_match(db, p_str, g_str, pred, gold):
     """
     return 1 if the values between prediction and gold are matching
@@ -687,14 +741,18 @@ def eval_exec_match(db, p_str, g_str, pred, gold):
     """
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
+
+    try:
+        cursor.execute(g_str)
+        g_res = cursor.fetchall()
+    except Exception as g_e:
+        g_res = str(g_e)
+
     try:
         cursor.execute(p_str)
         p_res = cursor.fetchall()
-    except:
-        return False
-
-    cursor.execute(g_str)
-    q_res = cursor.fetchall()
+    except Exception as p_e:
+        return False, str(g_res), str(p_e)
 
     def res_map(res, val_units):
         rmap = {}
@@ -704,8 +762,30 @@ def eval_exec_match(db, p_str, g_str, pred, gold):
         return rmap
 
     p_val_units = [unit[1] for unit in pred['select'][1]]
-    q_val_units = [unit[1] for unit in gold['select'][1]]
-    return res_map(p_res, p_val_units) == res_map(q_res, q_val_units)
+    g_val_units = [unit[1] for unit in gold['select'][1]]
+    """
+    print return res_map(p_res, p_val_units) == res_map(g_res, g_val_units),str(g_res), str(p_res)(pred)
+    print(g_val_units)
+    print(p_val_units)
+    print("res_map:")
+    print(res_map(g_res, g_val_units))
+    print(res_map(p_res, p_val_units))
+    """
+    g_check_result = execSQL_result_convertor(g_res)
+    p_check_result = execSQL_result_convertor(p_res)
+    g_result_object = Result(g_check_result["column_names"],
+                                  g_check_result["column_types"],
+                                  g_check_result["rows"])
+    p_result_object = Result(p_check_result["column_names"],
+                                 p_check_result["column_types"],
+                                 p_check_result["rows"])
+
+    oracle_check, error = Check(g_result_object, p_result_object, True,True)  # check result->another_result是否符合is_upper
+    return oracle_check, str(g_res), str(p_res)
+    # return res_map(p_res, p_val_units) == res_map(g_res, g_val_units), str(g_res), str(p_res)
+
+
+
 
 
 # Rebuild SQL functions for value evaluation
@@ -917,6 +997,7 @@ def build_foreign_key_map_from_json(table):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--model', dest='model', type=str)
     parser.add_argument('--gold', dest='gold', type=str)
     parser.add_argument('--pred', dest='pred', type=str)
     parser.add_argument('--acc', dest='acc', type=str)
@@ -925,6 +1006,7 @@ if __name__ == "__main__":
     parser.add_argument('--etype', dest='etype', type=str)
     args = parser.parse_args()
 
+    model = args.model
     gold = args.gold
     pred = args.pred
     acc = args.acc
@@ -936,5 +1018,4 @@ if __name__ == "__main__":
 
     kmaps = build_foreign_key_map_from_json(table)
 
-    evaluate(gold, pred, acc, db_dir, etype, kmaps)
-
+    evaluate(model, gold, pred, acc, db_dir, etype, kmaps)

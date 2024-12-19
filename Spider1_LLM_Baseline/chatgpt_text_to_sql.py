@@ -117,6 +117,7 @@ def chatgpt_text_to_sql_process(test_cnt, model, temperature, llm_key):
         # 创建目录
         os.makedirs(output_dic, exist_ok=True)
     gold_file_output = os.path.join(output_dic, "gold.txt")
+    detailed_gold_info_file = os.path.join(output_dic, "detailed_gold_info.jsonl")
     predicted_file = os.path.join(output_dic, "predict.txt")
     response_file= os.path.join(output_dic, "predict.jsonl")
 
@@ -153,6 +154,9 @@ def chatgpt_text_to_sql_process(test_cnt, model, temperature, llm_key):
         with open(response_file, "a", encoding="utf-8") as w:
             json.dump(response, w)
             w.write("\n")
+        with open(detailed_gold_info_file, "a", encoding="utf-8") as w:
+            json.dump(contents[finished_cnt], w)
+            w.write("\n")
         finished_cnt += 1
 
 
@@ -175,3 +179,5 @@ if __name__ == "__main__":
         temperature=args.temperature,
         llm_key=args.llm_key
     )
+
+

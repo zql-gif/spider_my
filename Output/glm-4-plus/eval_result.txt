@@ -1,7 +1,7 @@
                      easy                 medium               hard                 extra                all                 
 count                36                   53                   35                   26                   150                 
 =====================   EXECUTION ACCURACY     =====================
-execution            0.528                0.226                0.000                0.269                0.253               
+execution            0.833                0.717                0.286                0.692                0.640               
 
 ====================== EXACT MATCHING ACCURACY =====================
 exact match          0.444                0.245                0.000                0.231                0.233               
